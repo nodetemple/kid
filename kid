@@ -12,7 +12,7 @@ set -e
 
 function print_usage {
   cat << EOF
-${EXECUTABLE} is a utility for launching Kubernetes in Docker
+${EXECUTABLE} is an utility for launching Kubernetes in Docker
 
 Usage: ${EXECUTABLE} [command]
 
@@ -49,7 +49,7 @@ function check_prerequisites {
   fi
 
   docker info > /dev/null
-  if [ $? != 0 ]; then
+  if [ ${?} != 0 ]; then
     echo Docker Engine is not running!
     exit 1
   fi
@@ -72,8 +72,8 @@ function active_docker_machine {
 
 function mount_filesystem_shared_if_necessary {
   local machine=$(active_docker_machine)
-  if [ -n "$machine" ]; then
-    docker-machine ssh $machine sudo mount --make-shared /
+  if [ -n "${machine}" ]; then
+    docker-machine ssh ${machine} sudo mount --make-shared /
   else
     if grep -q "MountFlags=slave" /etc/systemd/system/docker.service /usr/lib64/systemd/system/docker.service &> /dev/null; then
       sudo mkdir -p /etc/systemd/system/docker.service.d/
@@ -88,21 +88,21 @@ EOF
 }
 
 function forward_port_if_necessary {
-  local port=$1
+  local port=${1}
   local machine=$(active_docker_machine)
 
-  if [ -n "$machine" ]; then
-    if ! pgrep -f "ssh.*$port:localhost" > /dev/null; then
-      docker-machine ssh "$machine" -f -N -L "$port:localhost:$port"
+  if [ -n "${machine}" ]; then
+    if ! pgrep -f "ssh.*${port}:localhost" > /dev/null; then
+      docker-machine ssh ${machine} -f -N -L "${port}:localhost:${port}"
     else
-      echo Did not set up port forwarding to the Docker machine: An ssh tunnel on port $port already exists. The kubernetes cluster may not be reachable from local kubectl.
+      echo Did not set up port forwarding to the Docker machine: An ssh tunnel on port ${port} already exists. The kubernetes cluster may not be reachable from local kubectl.
     fi
   fi
 }
 
 function remove_port_forward_if_forwarded {
-  local port=$1
-  pkill -f "ssh.*docker.*$port:localhost:$port"
+  local port=${1}
+  pkill -f "ssh.*docker.*${port}:localhost:${port}"
 }
 
 function wait_for_kubernetes {
@@ -123,7 +123,7 @@ EOF
 }
 
 function activate_kubernetes_dashboard {
-  local dashboard_service_nodeport=$1
+  local dashboard_service_nodeport=${1}
   kubectl create -f - << EOF > /dev/null
 # Source: https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/kubernetes-dashboard-canary.yaml
 kind: List
@@ -178,7 +178,7 @@ items:
     ports:
     - port: 80
       targetPort: 9090
-      nodePort: $dashboard_service_nodeport  # Addition. Not present in upstream definition.
+      nodePort: ${dashboard_service_nodeport}  # Addition. Not present in upstream definition.
     selector:
       app: kubernetes-dashboard-canary
     type: NodePort
@@ -186,8 +186,8 @@ EOF
 }
 
 function start_dns {
-  local dns_domain=$1
-  local dns_server_ip=$2
+  local dns_domain=${1}
+  local dns_server_ip=${2}
 
   kubectl create -f - << EOF > /dev/null
 apiVersion: v1
@@ -247,7 +247,7 @@ spec:
             memory: 50Mi
         args:
         # command = "/kube2sky"
-        - --domain=$dns_domain
+        - --domain=${dns_domain}
       - name: skydns
         image: gcr.io/google_containers/skydns:2015-10-13-8c72f8c
         resources:
@@ -318,7 +318,7 @@ metadata:
 spec:
   selector:
     k8s-app: kube-dns
-  clusterIP: $dns_server_ip
+  clusterIP: ${dns_server_ip}
   ports:
   - name: dns
     port: 53
@@ -330,11 +330,11 @@ EOF
 }
 
 function start_kubernetes {
-  local kubernetes_version=$1
-  local kubernetes_api_port=$2
-  local dashboard_service_nodeport=$3
-  local dns_domain=$4
-  local dns_server_ip=$5
+  local kubernetes_version=${1}
+  local kubernetes_api_port=${2}
+  local dashboard_service_nodeport=${3}
+  local dns_domain=${4}
+  local dns_server_ip=${5}
   check_prerequisites
 
   if kubectl cluster-info 2> /dev/null; then
@@ -362,20 +362,20 @@ function start_kubernetes {
         --address="0.0.0.0" \
         --api-servers=http://localhost:${kubernetes_api_port} \
         --config=/etc/kubernetes/manifests \
-        --cluster-dns=$DNS_SERVER_IP \
-        --cluster-domain=$DNS_DOMAIN \
+        --cluster-dns=${DNS_SERVER_IP} \
+        --cluster-domain=${DNS_DOMAIN} \
         --allow-privileged=true --v=2 \
         > /dev/null
 
   # TODO: Set and use an own Kubernetes context instead of forwarding the port?
-  forward_port_if_necessary $kubernetes_api_port
+  forward_port_if_necessary ${kubernetes_api_port}
 
   echo Waiting for Kubernetes cluster to become available...
   wait_for_kubernetes
   create_kube_system_namespace
-  start_dns $dns_domain $dns_server_ip
-  activate_kubernetes_dashboard $dashboard_service_nodeport
-  echo Kubernetes cluster is up. The Kubernetes dashboard can be accessed via HTTP at port $dashboard_service_nodeport of your Docker host.
+  start_dns ${dns_domain} ${dns_server_ip}
+  activate_kubernetes_dashboard ${dashboard_service_nodeport}
+  echo Kubernetes cluster is up. The Kubernetes dashboard can be accessed via HTTP at port ${dashboard_service_nodeport} of your Docker host.
 }
 
 function delete_kubernetes_resources {
@@ -390,33 +390,37 @@ function delete_docker_containers {
   docker rm -fv kubelet > /dev/null 2>&1
 
   k8s_containers=$(docker ps -aqf "name=k8s_")
-  if [ ! -z "$k8s_containers" ]; then
-    docker stop $k8s_containers > /dev/null 2>&1
-    docker wait $k8s_containers > /dev/null 2>&1
-    docker rm -fv $k8s_containers > /dev/null 2>&1
+  if [ ! -z "${k8s_containers}" ]; then
+    docker stop ${k8s_containers} > /dev/null 2>&1
+    docker wait ${k8s_containers} > /dev/null 2>&1
+    docker rm -fv ${k8s_containers} > /dev/null 2>&1
   fi
 }
 
 function stop_kubernetes {
-  local kubernetes_api_port=$1
+  local kubernetes_api_port=${1}
   delete_kubernetes_resources
   delete_docker_containers
-  remove_port_forward_if_forwarded $kubernetes_api_port
+  remove_port_forward_if_forwarded ${kubernetes_api_port}
 }
 
-if [ $1 == "up" ]; then
-  start_kubernetes $KUBERNETES_VERSION \
-    $KUBERNETES_API_PORT \
-    $KUBERNETES_DASHBOARD_NODEPORT \
-    $DNS_DOMAIN $DNS_SERVER_IP
-elif [ $1 == "down" ]; then
+if [ ${1} == "up" ]; then
+  start_kubernetes ${KUBERNETES_VERSION} \
+    ${KUBERNETES_API_PORT} \
+    ${KUBERNETES_DASHBOARD_NODEPORT} \
+    ${DNS_DOMAIN} ${DNS_SERVER_IP}
+elif [ ${1} == "down" ]; then
   # TODO: Ensure current Kubernetes context is set to local Docker (or Docker Machine VM) before downing
-  stop_kubernetes $KUBERNETES_API_PORT
-elif [ $1 == "restart" ]; then
+  stop_kubernetes ${KUBERNETES_API_PORT}
+elif [ ${1} == "restart" ]; then
   # TODO: Check if not currently running before downing. Show a message if not running.
   ${EXECUTABLE} down && ${EXECUTABLE} up
-elif [ $1 == "version" ]; then
+elif [ ${1} == "version" ]; then
   echo ${EXECUTABLE} v${EXECUTABLE_VERSION}
+elif [ ${1} != "" ]; then
+  echo Unknown command: ${1}
+  print_usage
+  exit 1
 else
   print_usage
 fi
