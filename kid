@@ -421,7 +421,7 @@ elif [ "${1}" == "help" ]; then
   print_usage
 elif [ "${1}" != "" ]; then
   echo Unknown command: ${1}
-  print_usage
+  echo For usage information type: ${EXECUTABLE} help
   exit 1
 else
   print_usage
