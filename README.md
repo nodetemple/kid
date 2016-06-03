@@ -3,8 +3,9 @@
 Launch Kubernetes in Docker in one `kid up` command.
 
 ```
- ❱ kid 
+$ kid
 kid is a utility for launching Kubernetes in Docker
+
 Usage: kid [command]
 
 Available commands:
@@ -22,3 +23,7 @@ kid also sets up:
  * The [DNS addon](https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/dns)
  * The [Kubernetes Dashboard](https://github.com/kubernetes/dashboard)
 
+## Installation
+```
+curl -Ls https://git.io/ntkid | bash
+```

@@ -57,8 +57,8 @@ function forward_port_if_necessary {
   if [ -n "$machine" ]; then
     if ! pgrep -f "ssh.*$port:localhost" > /dev/null; then
       docker-machine ssh "$machine" -f -N -L "$port:localhost:$port"
-  else
-    echo Did not set up port forwarding to the Docker machine: An ssh tunnel on port $port already exists. The kubernetes cluster may not be reachable from local kubectl.
+    else
+      echo Did not set up port forwarding to the Docker machine: An ssh tunnel on port $port already exists. The kubernetes cluster may not be reachable from local kubectl.
     fi
   fi
 }
@@ -301,7 +301,7 @@ function start_kubernetes {
   check_prerequisites
 
   if kubectl cluster-info 2> /dev/null; then
-    echo kubectl is already configured to use an existing cluster
+    echo kubectl is already configured to use an existing cluster.
     exit 1
   fi
 
