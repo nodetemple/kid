@@ -3,6 +3,9 @@
 RAW_REPO="https://raw.githubusercontent.com/nodetemple/kid/master"
 EXECUTABLE="kid"
 INSTALL_PATH="/usr/local/bin"
+if uname -r | grep -q "coreos"; then
+  INSTALL_PATH="/opt/bin"
+fi
 
 SUPPORTED="linux-amd64 linux-i386 darwin-amd64 darwin-i386"
 PLATFORM="$(uname | tr '[:upper:]' '[:lower:]')"
