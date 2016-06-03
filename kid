@@ -12,7 +12,8 @@ set -e
 
 function print_usage {
   cat << EOF
-${EXECUTABLE} is an utility for launching Kubernetes in Docker
+${EXECUTABLE} - an utility for launching Kubernetes in Docker.
+Version: ${EXECUTABLE_VERSION}
 
 Usage: ${EXECUTABLE} [command]
 
