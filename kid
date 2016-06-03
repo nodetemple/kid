@@ -1,13 +1,12 @@
 #!/bin/bash
-#
-# it's a helper script for launching Kubernetes in Docker
+EXECUTABLE=${0##*/}
+EXECUTABLE_VERSION=0.0.1
 
 KUBERNETES_VERSION=1.2.4
 KUBERNETES_API_PORT=8080
 KUBERNETES_DASHBOARD_NODEPORT=31999
 DNS_DOMAIN=cluster.local
 DNS_SERVER_IP=10.0.0.10
-EXECUTABLE=${0##*/}
 
 set -e
 
@@ -42,7 +41,7 @@ function check_prerequisites {
     exit 1
   fi
 
-  if ! [ "$(command -v docker)" ]; then
+  if ! [ $(command -v docker) ]; then
     echo Docker is not installed!
     exit 1
   fi
@@ -54,7 +53,7 @@ function check_prerequisites {
   fi
 
   # TODO: update/check kubectl if version changed on environment variable
-  if ! [ "$(command -v kubectl)" ]; then
+  if ! [ $(command -v kubectl) ]; then
     echo kubectl is not installed yet. Installing now...
     curl -Ls http://storage.googleapis.com/kubernetes-release/release/v${KUBERNETES_VERSION}/bin/linux/amd64/kubectl -O
     chmod +x kubectl
@@ -403,17 +402,21 @@ function stop_kubernetes {
   remove_port_forward_if_forwarded $kubernetes_api_port
 }
 
-if [ "$1" == "up" ]; then
+if [ $1 == "up" ]; then
   start_kubernetes $KUBERNETES_VERSION \
     $KUBERNETES_API_PORT \
     $KUBERNETES_DASHBOARD_NODEPORT \
     $DNS_DOMAIN $DNS_SERVER_IP
-elif [ "$1" == "down" ]; then
+elif [ $1 == "down" ]; then
   # TODO: Ensure current Kubernetes context is set to local Docker (or Docker Machine VM) before downing
   stop_kubernetes $KUBERNETES_API_PORT
-elif [ "$1" == "restart" ]; then
+elif [ $1 == "restart" ]; then
   # TODO: Check if not currently running before downing. Show a message if not running.
   ${EXECUTABLE} down && ${EXECUTABLE} up
+elif [ $1 == "version" ]; then
+  echo ${EXECUTABLE} v${EXECUTABLE_VERSION}
+elif [ $1 == "help" ]; then
+  print_usage
 else
   print_usage
 fi
