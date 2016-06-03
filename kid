@@ -17,9 +17,11 @@ ${EXECUTABLE} is a utility for launching Kubernetes in Docker
 Usage: ${EXECUTABLE} [command]
 
 Available commands:
-  up       Starts Kubernetes in the Docker host currently configured with your local docker command
-  down     Tear down a previously started Kubernetes cluster
-  restart  Restart Kubernetes
+  up       Start Kubernetes in the Docker host currently configured with your local docker command.
+  down     Tear down a previously started Kubernetes.
+  restart  Restart Kubernetes.
+  version  Show version.
+  help     Show usage information.
 EOF
 }
 
