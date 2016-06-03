@@ -34,7 +34,7 @@ function check_prerequisites {
   SUPPORTED="linux-amd64 linux-i386 darwin-amd64 darwin-i386"
   PLATFORM=$(uname | tr '[:upper:]' '[:lower:]')
   ARCH=$(uname -m)
-  if [ ${ARCH} == "x86_64" ]; then
+  if [ "${ARCH}" == "x86_64" ]; then
     ARCH=amd64
   fi
 
@@ -43,19 +43,19 @@ function check_prerequisites {
     exit 1
   fi
 
-  if ! [ $(command -v docker) ]; then
+  if ! [ "$(command -v docker)" ]; then
     echo Docker is not installed!
     exit 1
   fi
 
   docker info > /dev/null
-  if [ ${?} != 0 ]; then
+  if [ "${?}" != 0 ]; then
     echo Docker Engine is not running!
     exit 1
   fi
 
   # TODO: update/check kubectl if version changed on environment variable
-  if ! [ $(command -v kubectl) ]; then
+  if ! [ "$(command -v kubectl)" ]; then
     echo kubectl is not installed yet. Installing now...
     curl -Ls http://storage.googleapis.com/kubernetes-release/release/v${KUBERNETES_VERSION}/bin/linux/amd64/kubectl -O
     chmod +x kubectl
@@ -65,7 +65,7 @@ function check_prerequisites {
 }
 
 function active_docker_machine {
-  if [ $(command -v docker-machine) ]; then
+  if [ "$(command -v docker-machine)" ]; then
     docker-machine active
   fi
 }
@@ -404,20 +404,20 @@ function stop_kubernetes {
   remove_port_forward_if_forwarded ${kubernetes_api_port}
 }
 
-if [ ${1} == "up" ]; then
+if [ "${1}" == "up" ]; then
   start_kubernetes ${KUBERNETES_VERSION} \
     ${KUBERNETES_API_PORT} \
     ${KUBERNETES_DASHBOARD_NODEPORT} \
     ${DNS_DOMAIN} ${DNS_SERVER_IP}
-elif [ ${1} == "down" ]; then
+elif [ "${1}" == "down" ]; then
   # TODO: Ensure current Kubernetes context is set to local Docker (or Docker Machine VM) before downing
   stop_kubernetes ${KUBERNETES_API_PORT}
-elif [ ${1} == "restart" ]; then
+elif [ "${1}" == "restart" ]; then
   # TODO: Check if not currently running before downing. Show a message if not running.
   ${EXECUTABLE} down && ${EXECUTABLE} up
-elif [ ${1} == "version" ]; then
+elif [ "${1}" == "version" ]; then
   echo ${EXECUTABLE} v${EXECUTABLE_VERSION}
-elif [ ${1} != "" ]; then
+elif [ "${1}" != "" ]; then
   echo Unknown command: ${1}
   print_usage
   exit 1
