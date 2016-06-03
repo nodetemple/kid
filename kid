@@ -76,7 +76,7 @@ function mount_filesystem_shared_if_necessary {
   else
     if grep -q "MountFlags=slave" /etc/systemd/system/docker.service /usr/lib64/systemd/system/docker.service &> /dev/null; then
       sudo mkdir -p /etc/systemd/system/docker.service.d/
-cat << EOF | sudo tee /etc/systemd/system/docker.service.d/clear_mount_propagtion_flags.conf
+sudo tee /etc/systemd/system/docker.service.d/clear_mount_propagtion_flags.conf << EOF
 [Service]
 MountFlags=shared
 EOF
