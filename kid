@@ -74,7 +74,7 @@ function mount_filesystem_shared_if_necessary {
   if [ -n "$machine" ]; then
     docker-machine ssh $machine sudo mount --make-shared /
   else
-    if grep -q "MountFlags=slave" /etc/systemd/system/docker.service /usr/lib64/systemd/system/docker.service; then
+    if grep -q "MountFlags=slave" /etc/systemd/system/docker.service /usr/lib64/systemd/system/docker.service &> /dev/null; then
       sudo mkdir -p /etc/systemd/system/docker.service.d/
 cat << EOF | sudo tee /etc/systemd/system/docker.service.d/clear_mount_propagtion_flags.conf
 [Service]
