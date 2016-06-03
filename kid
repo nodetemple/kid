@@ -1,21 +1,21 @@
 #!/bin/bash
 #
-# kid is a helper script for launching Kubernetes in Docker
+# it's a helper script for launching Kubernetes in Docker
 
 KUBERNETES_VERSION=1.2.4
 KUBERNETES_API_PORT=8080
 KUBERNETES_DASHBOARD_NODEPORT=31999
 DNS_DOMAIN=cluster.local
 DNS_SERVER_IP=10.0.0.10
-EXECUTABLE=kid
+EXECUTABLE=${0##*/}
 
 set -e
 
 function print_usage {
   cat << EOF
-kid is a utility for launching Kubernetes in Docker
+${EXECUTABLE} is a utility for launching Kubernetes in Docker
 
-Usage: kid [command]
+Usage: ${EXECUTABLE} [command]
 
 Available commands:
   up       Starts Kubernetes in the Docker host currently configured with your local docker command
@@ -38,7 +38,7 @@ function check_prerequisites {
   fi
 
   if ! echo "${SUPPORTED}" | tr ' ' '\n' | grep -q "${PLATFORM}-${ARCH}"; then
-    echo ${EXECUTABLE} is not currently supported on ${PLATFORM}-${ARCH}.
+    echo ${EXECUTABLE} is not currently supported on ${PLATFORM}-${ARCH}!
     exit 1
   fi
 
@@ -49,13 +49,13 @@ function check_prerequisites {
 
   docker info > /dev/null
   if [ $? != 0 ]; then
-    echo A running Docker engine is required. Is your Docker host up?
+    echo Docker Engine is not running!
     exit 1
   fi
 
   # TODO: update/check kubectl if version changed on environment variable
   if ! [ "$(command -v kubectl)" ]; then
-    echo kubectl is not installed yet. Installing...
+    echo kubectl is not installed yet. Installing now...
     curl -Ls http://storage.googleapis.com/kubernetes-release/release/v${KUBERNETES_VERSION}/bin/linux/amd64/kubectl -O
     chmod +x kubectl
     sudo mkdir -p ${INSTALL_PATH}
@@ -366,7 +366,7 @@ function start_kubernetes {
         --allow-privileged=true --v=2 \
         > /dev/null
 
-  # TODO: Set and use a `kid` Kubernetes context instead of forwarding the port?
+  # TODO: Set and use an own Kubernetes context instead of forwarding the port?
   forward_port_if_necessary $kubernetes_api_port
 
   echo Waiting for Kubernetes cluster to become available...
@@ -413,7 +413,7 @@ elif [ "$1" == "down" ]; then
   stop_kubernetes $KUBERNETES_API_PORT
 elif [ "$1" == "restart" ]; then
   # TODO: Check if not currently running before downing. Show a message if not running.
-  kid down && kid up
+  ${EXECUTABLE} down && ${EXECUTABLE} up
 else
   print_usage
 fi
