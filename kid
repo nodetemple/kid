@@ -73,6 +73,16 @@ function mount_filesystem_shared_if_necessary {
   local machine=$(active_docker_machine)
   if [ -n "$machine" ]; then
     docker-machine ssh $machine sudo mount --make-shared /
+  else
+    if grep -q "MountFlags=slave" /etc/systemd/system/docker.service /usr/lib64/systemd/system/docker.service; then
+      sudo mkdir -p /etc/systemd/system/docker.service.d/
+cat << EOF | sudo tee /etc/systemd/system/docker.service.d/clear_mount_propagtion_flags.conf
+[Service]
+MountFlags=shared
+EOF
+      sudo systemctl daemon-reload
+      sudo systemctl restart docker.service
+    fi
   fi
 }
 
@@ -354,7 +364,7 @@ function start_kubernetes {
         --cluster-dns=$DNS_SERVER_IP \
         --cluster-domain=$DNS_DOMAIN \
         --allow-privileged=true --v=2 \
-    > /dev/null
+        > /dev/null
 
   # TODO: Set and use a `kid` Kubernetes context instead of forwarding the port?
   forward_port_if_necessary $kubernetes_api_port
