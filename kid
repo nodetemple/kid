@@ -416,7 +416,7 @@ elif [ "${1}" == "restart" ]; then
   # TODO: Check if not currently running before downing. Show a message if not running.
   ${EXECUTABLE} down && ${EXECUTABLE} up
 elif [ "${1}" == "version" ]; then
-  echo ${EXECUTABLE} v${EXECUTABLE_VERSION}
+  echo ${EXECUTABLE_VERSION}
 elif [ "${1}" == "help" ]; then
   print_usage
 elif [ "${1}" != "" ]; then
