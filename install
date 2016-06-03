@@ -1,0 +1,28 @@
+#!/bin/bash
+
+RAW_REPO="https://raw.githubusercontent.com/nodetemple/kid/master"
+EXECUTABLE="kid"
+INSTALL_PATH="/usr/local/bin"
+
+SUPPORTED="linux-amd64 linux-i386 darwin-amd64 darwin-i386"
+PLATFORM="$(uname | tr '[:upper:]' '[:lower:]')"
+ARCH="$(uname -m)"
+if [ "${ARCH}" == "x86_64" ]; then
+  ARCH="amd64"
+fi
+
+if ! echo "${SUPPORTED}" | tr ' ' '\n' | grep -q "${PLATFORM}-${ARCH}"; then
+  echo ${EXECUTABLE} is not currently supported on ${PLATFORM}-${ARCH}.
+else
+  curl -Ls ${RAW_REPO}/${EXECUTABLE} -O && \
+  chmod +x ${EXECUTABLE} && \
+  sudo mkdir -p ${INSTALL_PATH} && \
+  sudo mv -f kid ${INSTALL_PATH}/${EXECUTABLE}
+fi
+
+if [ $(command -v ${EXECUTABLE}) ]; then
+  echo ${EXECUTABLE} installation was successful.
+else
+  echo ${EXECUTABLE} installation has failed!
+  exit 1
+fi
