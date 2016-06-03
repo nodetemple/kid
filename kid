@@ -7,6 +7,7 @@ KUBERNETES_API_PORT=8080
 KUBERNETES_DASHBOARD_NODEPORT=31999
 DNS_DOMAIN=cluster.local
 DNS_SERVER_IP=10.0.0.10
+EXECUTABLE=kid
 
 set -e
 
@@ -24,16 +25,41 @@ EOF
 }
 
 function check_prerequisites {
-  function require_command_exists() {
-    command -v "$1" >/dev/null 2>&1 || \
-    { echo "$1 is required but is not installed. Aborting." >&2; exit 1; }
-  }
-  require_command_exists kubectl
-  require_command_exists docker
+  INSTALL_PATH=/usr/local/bin
+  if uname -r | grep -q "coreos"; then
+    INSTALL_PATH=/opt/bin
+  fi
+
+  SUPPORTED="linux-amd64 linux-i386 darwin-amd64 darwin-i386"
+  PLATFORM=$(uname | tr '[:upper:]' '[:lower:]')
+  ARCH=$(uname -m)
+  if [ ${ARCH} == "x86_64" ]; then
+    ARCH=amd64
+  fi
+
+  if ! echo "${SUPPORTED}" | tr ' ' '\n' | grep -q "${PLATFORM}-${ARCH}"; then
+    echo ${EXECUTABLE} is not currently supported on ${PLATFORM}-${ARCH}.
+    exit 1
+  fi
+
+  if ! [ "$(command -v docker)" ]; then
+    echo Docker is not installed!
+    exit 1
+  fi
+
   docker info > /dev/null
   if [ $? != 0 ]; then
     echo A running Docker engine is required. Is your Docker host up?
     exit 1
+  fi
+
+  # TODO: update/check kubectl if version changed on environment variable
+  if ! [ "$(command -v kubectl)" ]; then
+    echo kubectl is not installed yet. Installing...
+    curl -Ls http://storage.googleapis.com/kubernetes-release/release/v${KUBERNETES_VERSION}/bin/linux/amd64/kubectl -O
+    chmod +x kubectl
+    sudo mkdir -p ${INSTALL_PATH}
+    sudo mv -f kubectl ${INSTALL_PATH}/kubectl
   fi
 }
 
