@@ -417,6 +417,8 @@ elif [ "${1}" == "restart" ]; then
   ${EXECUTABLE} down && ${EXECUTABLE} up
 elif [ "${1}" == "version" ]; then
   echo ${EXECUTABLE} v${EXECUTABLE_VERSION}
+elif [ "${1}" == "help" ]; then
+  print_usage
 elif [ "${1}" != "" ]; then
   echo Unknown command: ${1}
   print_usage
