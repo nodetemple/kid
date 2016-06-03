@@ -11,7 +11,7 @@ DNS_SERVER_IP=10.0.0.10
 set -e
 
 function print_usage {
-    cat << EOF
+  cat << EOF
 kid is a utility for launching Kubernetes in Docker
 
 Usage: kid [command]
@@ -24,58 +24,58 @@ EOF
 }
 
 function check_prerequisites {
-    function require_command_exists() {
-        command -v "$1" >/dev/null 2>&1 || \
-	    { echo "$1 is required but is not installed. Aborting." >&2; exit 1; }
-    }
-    require_command_exists kubectl
-    require_command_exists docker
-    docker info > /dev/null
-    if [ $? != 0 ]; then
-        echo A running Docker engine is required. Is your Docker host up?
-        exit 1
-    fi
+  function require_command_exists() {
+    command -v "$1" >/dev/null 2>&1 || \
+    { echo "$1 is required but is not installed. Aborting." >&2; exit 1; }
+  }
+  require_command_exists kubectl
+  require_command_exists docker
+  docker info > /dev/null
+  if [ $? != 0 ]; then
+    echo A running Docker engine is required. Is your Docker host up?
+    exit 1
+  fi
 }
 
 function active_docker_machine {
-    if [ $(command -v docker-machine) ]; then
-        docker-machine active
-    fi
+  if [ $(command -v docker-machine) ]; then
+    docker-machine active
+  fi
 }
 
 function mount_filesystem_shared_if_necessary {
-    local machine=$(active_docker_machine)
-    if [ -n "$machine" ]; then
-        docker-machine ssh $machine sudo mount --make-shared /
-    fi
+  local machine=$(active_docker_machine)
+  if [ -n "$machine" ]; then
+    docker-machine ssh $machine sudo mount --make-shared /
+  fi
 }
 
 function forward_port_if_necessary {
-    local port=$1
-    local machine=$(active_docker_machine)
+  local port=$1
+  local machine=$(active_docker_machine)
 
-    if [ -n "$machine" ]; then
-        if ! pgrep -f "ssh.*$port:localhost" > /dev/null; then
-            docker-machine ssh "$machine" -f -N -L "$port:localhost:$port"
-        else
-            echo Did not set up port forwarding to the Docker machine: An ssh tunnel on port $port already exists. The kubernetes cluster may not be reachable from local kubectl.
-        fi
+  if [ -n "$machine" ]; then
+    if ! pgrep -f "ssh.*$port:localhost" > /dev/null; then
+      docker-machine ssh "$machine" -f -N -L "$port:localhost:$port"
+  else
+    echo Did not set up port forwarding to the Docker machine: An ssh tunnel on port $port already exists. The kubernetes cluster may not be reachable from local kubectl.
     fi
+  fi
 }
 
 function remove_port_forward_if_forwarded {
-    local port=$1
-    pkill -f "ssh.*docker.*$port:localhost:$port"
+  local port=$1
+  pkill -f "ssh.*docker.*$port:localhost:$port"
 }
 
 function wait_for_kubernetes {
-    until $(kubectl cluster-info &> /dev/null); do
-        sleep 1
-    done
+  until $(kubectl cluster-info &> /dev/null); do
+    sleep 1
+  done
 }
 
 function create_kube_system_namespace {
-    kubectl create -f - << EOF > /dev/null
+  kubectl create -f - << EOF > /dev/null
 kind: Namespace
 apiVersion: v1
 metadata:
@@ -86,8 +86,8 @@ EOF
 }
 
 function activate_kubernetes_dashboard {
-    local dashboard_service_nodeport=$1
-    kubectl create -f - << EOF > /dev/null
+  local dashboard_service_nodeport=$1
+  kubectl create -f - << EOF > /dev/null
 # Source: https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/kubernetes-dashboard-canary.yaml
 kind: List
 apiVersion: v1
@@ -149,10 +149,10 @@ EOF
 }
 
 function start_dns {
-    local dns_domain=$1
-    local dns_server_ip=$2
+  local dns_domain=$1
+  local dns_server_ip=$2
 
-    kubectl create -f - << EOF > /dev/null
+  kubectl create -f - << EOF > /dev/null
 apiVersion: v1
 kind: ReplicationController
 metadata:
@@ -293,91 +293,91 @@ EOF
 }
 
 function start_kubernetes {
-    local kubernetes_version=$1
-    local kubernetes_api_port=$2
-    local dashboard_service_nodeport=$3
-    local dns_domain=$4
-    local dns_server_ip=$5
-    check_prerequisites
+  local kubernetes_version=$1
+  local kubernetes_api_port=$2
+  local dashboard_service_nodeport=$3
+  local dns_domain=$4
+  local dns_server_ip=$5
+  check_prerequisites
 
-    if kubectl cluster-info 2> /dev/null; then
-        echo kubectl is already configured to use an existing cluster
-        exit 1
-    fi
+  if kubectl cluster-info 2> /dev/null; then
+    echo kubectl is already configured to use an existing cluster
+    exit 1
+  fi
 
-    mount_filesystem_shared_if_necessary
+  mount_filesystem_shared_if_necessary
 
-    docker run \
-        --name=kubelet \
-        --volume=/:/rootfs:ro \
-        --volume=/sys:/sys:ro \
-        --volume=/var/lib/docker/:/var/lib/docker:rw \
-        --volume=/var/lib/kubelet/:/var/lib/kubelet:rw,shared \
-        --volume=/var/run:/var/run:rw \
-        --net=host \
-        --pid=host \
-        --privileged=true \
-        -d \
-        gcr.io/google_containers/hyperkube-amd64:v${kubernetes_version} \
-        /hyperkube kubelet \
-            --containerized \
-            --hostname-override="127.0.0.1" \
-            --address="0.0.0.0" \
-            --api-servers=http://localhost:${kubernetes_api_port} \
-            --config=/etc/kubernetes/manifests \
-            --cluster-dns=$DNS_SERVER_IP \
-            --cluster-domain=$DNS_DOMAIN \
-            --allow-privileged=true --v=2 \
-	    > /dev/null
+  docker run \
+    --name=kubelet \
+    --volume=/:/rootfs:ro \
+    --volume=/sys:/sys:ro \
+    --volume=/var/lib/docker/:/var/lib/docker:rw \
+    --volume=/var/lib/kubelet/:/var/lib/kubelet:rw,shared \
+    --volume=/var/run:/var/run:rw \
+    --net=host \
+    --pid=host \
+    --privileged=true \
+    -d \
+    gcr.io/google_containers/hyperkube-amd64:v${kubernetes_version} \
+    /hyperkube kubelet \
+        --containerized \
+        --hostname-override="127.0.0.1" \
+        --address="0.0.0.0" \
+        --api-servers=http://localhost:${kubernetes_api_port} \
+        --config=/etc/kubernetes/manifests \
+        --cluster-dns=$DNS_SERVER_IP \
+        --cluster-domain=$DNS_DOMAIN \
+        --allow-privileged=true --v=2 \
+    > /dev/null
 
-    # TODO: Set and use a `kid` Kubernetes context instead of forwarding the port?
-    forward_port_if_necessary $kubernetes_api_port
+  # TODO: Set and use a `kid` Kubernetes context instead of forwarding the port?
+  forward_port_if_necessary $kubernetes_api_port
 
-    echo Waiting for Kubernetes cluster to become available...
-    wait_for_kubernetes
-    create_kube_system_namespace
-    start_dns $dns_domain $dns_server_ip
-    activate_kubernetes_dashboard $dashboard_service_nodeport
-    echo Kubernetes cluster is up. The Kubernetes dashboard can be accessed via HTTP at port $dashboard_service_nodeport of your Docker host.
+  echo Waiting for Kubernetes cluster to become available...
+  wait_for_kubernetes
+  create_kube_system_namespace
+  start_dns $dns_domain $dns_server_ip
+  activate_kubernetes_dashboard $dashboard_service_nodeport
+  echo Kubernetes cluster is up. The Kubernetes dashboard can be accessed via HTTP at port $dashboard_service_nodeport of your Docker host.
 }
 
 function delete_kubernetes_resources {
-    kubectl delete replicationcontrollers,services,pods,secrets --all > /dev/null 2>&1 || :
-    kubectl delete replicationcontrollers,services,pods,secrets --all --namespace=kube-system > /dev/null 2>&1 || :
-    kubectl delete namespace kube-system > /dev/null 2>&1 || :
+  kubectl delete replicationcontrollers,services,pods,secrets --all > /dev/null 2>&1 || :
+  kubectl delete replicationcontrollers,services,pods,secrets --all --namespace=kube-system > /dev/null 2>&1 || :
+  kubectl delete namespace kube-system > /dev/null 2>&1 || :
 }
 
 function delete_docker_containers {
-    # Remove the kubelet first so that it doesn't restart pods that we're going to remove next
-    docker stop kubelet > /dev/null 2>&1
-    docker rm -fv kubelet > /dev/null 2>&1
+  # Remove the kubelet first so that it doesn't restart pods that we're going to remove next
+  docker stop kubelet > /dev/null 2>&1
+  docker rm -fv kubelet > /dev/null 2>&1
 
-    k8s_containers=$(docker ps -aqf "name=k8s_")
-    if [ ! -z "$k8s_containers" ]; then
-        docker stop $k8s_containers > /dev/null 2>&1
-        docker wait $k8s_containers > /dev/null 2>&1
-        docker rm -fv $k8s_containers > /dev/null 2>&1
-    fi
+  k8s_containers=$(docker ps -aqf "name=k8s_")
+  if [ ! -z "$k8s_containers" ]; then
+    docker stop $k8s_containers > /dev/null 2>&1
+    docker wait $k8s_containers > /dev/null 2>&1
+    docker rm -fv $k8s_containers > /dev/null 2>&1
+  fi
 }
 
 function stop_kubernetes {
-    local kubernetes_api_port=$1
-    delete_kubernetes_resources
-    delete_docker_containers
-    remove_port_forward_if_forwarded $kubernetes_api_port
+  local kubernetes_api_port=$1
+  delete_kubernetes_resources
+  delete_docker_containers
+  remove_port_forward_if_forwarded $kubernetes_api_port
 }
 
 if [ "$1" == "up" ]; then
-    start_kubernetes $KUBERNETES_VERSION \
-        $KUBERNETES_API_PORT \
-        $KUBERNETES_DASHBOARD_NODEPORT \
-        $DNS_DOMAIN $DNS_SERVER_IP
+  start_kubernetes $KUBERNETES_VERSION \
+    $KUBERNETES_API_PORT \
+    $KUBERNETES_DASHBOARD_NODEPORT \
+    $DNS_DOMAIN $DNS_SERVER_IP
 elif [ "$1" == "down" ]; then
-    # TODO: Ensure current Kubernetes context is set to local Docker (or Docker Machine VM) before downing
-    stop_kubernetes $KUBERNETES_API_PORT
+  # TODO: Ensure current Kubernetes context is set to local Docker (or Docker Machine VM) before downing
+  stop_kubernetes $KUBERNETES_API_PORT
 elif [ "$1" == "restart" ]; then
-    # TODO: Check if not currently running before downing. Show a message if not running.
-    kid down && kid up
+  # TODO: Check if not currently running before downing. Show a message if not running.
+  kid down && kid up
 else
-    print_usage
+  print_usage
 fi
