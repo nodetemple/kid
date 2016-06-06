@@ -24,7 +24,7 @@ else
 fi
 
 if [ $(command -v ${EXECUTABLE}) ]; then
-  echo ${EXECUTABLE} installation was successful.
+  echo ${EXECUTABLE} v$(kid version) installation was successful.
 else
   echo ${EXECUTABLE} installation has failed!
   exit 1
