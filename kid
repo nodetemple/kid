@@ -405,7 +405,7 @@ function delete_docker_containers {
   if [ -n "${machine}" ]; then
     docker-machine ssh ${machine} sudo rm -rf /var/lib/kubelet
   else
-    sudo rm -rf /var/lib/kubelet
+    sudo rm -rf /var/lib/kubelet > /dev/null 2>&1
   fi
 }
 
