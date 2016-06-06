@@ -404,6 +404,7 @@ function delete_docker_containers {
 
 function stop_kubernetes {
   local kubernetes_api_port=${1}
+  check_prerequisites
   delete_kubernetes_resources
   delete_docker_containers
   remove_port_forward_if_forwarded ${kubernetes_api_port}
