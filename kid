@@ -12,12 +12,16 @@ set -e
 
 function print_usage {
   cat << EOF
-${EXECUTABLE} - an utility for launching Kubernetes in Docker.
-Version: ${EXECUTABLE_VERSION}
+NAME:
+  ${EXECUTABLE} - an utility for launching Kubernetes in Docker.
 
-Usage: ${EXECUTABLE} [command]
+VERSION:
+  ${EXECUTABLE_VERSION}
 
-Available commands:
+USAGE:
+  ${EXECUTABLE} [command]
+
+COMMANDS:
   up       Start Kubernetes in the Docker host currently configured with your local docker command.
   down     Tear down a previously started Kubernetes.
   restart  Restart Kubernetes.
