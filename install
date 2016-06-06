@@ -20,7 +20,7 @@ else
   curl -Ls ${RAW_REPO}/${EXECUTABLE} -O && \
   chmod +x ${EXECUTABLE} && \
   sudo mkdir -p ${INSTALL_PATH} && \
-  sudo mv -f kid ${INSTALL_PATH}/${EXECUTABLE}
+  sudo mv -f ${EXECUTABLE} ${INSTALL_PATH}/${EXECUTABLE}
 fi
 
 if [ $(command -v ${EXECUTABLE}) ]; then
