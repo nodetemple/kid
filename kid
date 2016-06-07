@@ -89,7 +89,7 @@ function check_prerequisites {
   else
     local cluster_ip=127.0.0.1
   fi
-  kubectl config set-cluster k8s --server=http://${cluster_ip}:8080 &> /dev/null
+  kubectl config set-cluster k8s --server=http://${cluster_ip}:${KUBERNETES_API_PORT} &> /dev/null
   kubectl config set-context k8s --cluster=k8s &> /dev/null
   kubectl config use-context k8s &> /dev/null
 }
