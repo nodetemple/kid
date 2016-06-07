@@ -30,6 +30,12 @@ COMMANDS:
 EOF
 }
 
+function active_docker_machine {
+  if [ "$(command -v docker-machine)" ]; then
+    docker-machine active
+  fi
+}
+
 function check_prerequisites {
   INSTALL_PATH=/usr/local/bin
   if uname -r | grep -q "coreos"; then
@@ -76,12 +82,16 @@ function check_prerequisites {
       get_kubectl
     fi
   fi
-}
 
-function active_docker_machine {
-  if [ "$(command -v docker-machine)" ]; then
-    docker-machine active
+  local machine=$(active_docker_machine)
+  if [ -n "${machine}" ]; then
+    local cluster_ip=$(docker-machine ip ${machine})
+  else
+    local cluster_ip=127.0.0.1
   fi
+  kubectl config set-cluster k8s --server=http://${cluster_ip}:8080
+  kubectl config set-context k8s --cluster=k8s
+  kubectl config use-context k8s
 }
 
 function mount_filesystem_shared_if_necessary {
@@ -89,6 +99,7 @@ function mount_filesystem_shared_if_necessary {
   if [ -n "${machine}" ]; then
     docker-machine ssh ${machine} sudo mount --make-shared /
   else
+    # TODO: check if it's systemctl or init.d
     if grep -q "MountFlags=slave" /etc/systemd/system/docker.service /usr/lib64/systemd/system/docker.service &> /dev/null; then
       sudo mkdir -p /etc/systemd/system/docker.service.d/
 sudo tee /etc/systemd/system/docker.service.d/clear_mount_propagtion_flags.conf > /dev/null << EOF
@@ -99,24 +110,6 @@ EOF
       sudo systemctl restart docker.service
     fi
   fi
-}
-
-function forward_port_if_necessary {
-  local port=${1}
-  local machine=$(active_docker_machine)
-
-  if [ -n "${machine}" ]; then
-    if ! pgrep -f "ssh.*${port}:localhost" > /dev/null; then
-      docker-machine ssh ${machine} -f -N -L "${port}:localhost:${port}"
-    else
-      echo Did not set up port forwarding to the Docker machine: An ssh tunnel on port ${port} already exists. The kubernetes cluster may not be reachable from local kubectl.
-    fi
-  fi
-}
-
-function remove_port_forward_if_forwarded {
-  local port=${1}
-  pkill -f "ssh.*docker.*${port}:localhost:${port}"
 }
 
 function wait_for_kubernetes {
@@ -381,9 +374,6 @@ function start_kubernetes {
         --allow-privileged=true --v=2 \
         > /dev/null
 
-  # TODO: Set and use an own Kubernetes context instead of forwarding the port?
-  forward_port_if_necessary ${kubernetes_api_port}
-
   echo Waiting for Kubernetes cluster to become available...
   wait_for_kubernetes
   create_kube_system_namespace
@@ -399,7 +389,6 @@ function delete_kubernetes_resources {
 }
 
 function delete_docker_containers {
-  # Remove the kubelet first so that it doesn't restart pods that we're going to remove next
   docker stop kubelet > /dev/null 2>&1
   docker rm -fv kubelet > /dev/null 2>&1
 
@@ -429,7 +418,6 @@ function stop_kubernetes {
   fi
 
   delete_docker_containers
-  remove_port_forward_if_forwarded ${kubernetes_api_port}
 }
 
 if [ "${1}" == "up" ]; then
@@ -438,7 +426,6 @@ if [ "${1}" == "up" ]; then
     ${KUBERNETES_DASHBOARD_NODEPORT} \
     ${DNS_DOMAIN} ${DNS_SERVER_IP}
 elif [ "${1}" == "down" ]; then
-  # TODO: Ensure current Kubernetes context is set to local Docker (or Docker Machine VM) before downing
   stop_kubernetes ${KUBERNETES_API_PORT}
 elif [ "${1}" == "restart" ]; then
   ${EXECUTABLE} down && ${EXECUTABLE} up
