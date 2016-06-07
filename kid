@@ -66,7 +66,7 @@ function check_prerequisites {
     exit 1
   fi
 
-  docker info > /dev/null
+  docker info &>/dev/null
   if [ "${?}" != 0 ]; then
     echo Docker Engine is not running!
     exit 1
@@ -89,9 +89,9 @@ function check_prerequisites {
   else
     local cluster_ip=127.0.0.1
   fi
-  kubectl config set-cluster k8s --server=http://${cluster_ip}:${KUBERNETES_API_PORT} &> /dev/null
-  kubectl config set-context k8s --cluster=k8s &> /dev/null
-  kubectl config use-context k8s &> /dev/null
+  kubectl config set-cluster k8s --server=http://${cluster_ip}:${KUBERNETES_API_PORT} &>/dev/null
+  kubectl config set-context k8s --cluster=k8s &>/dev/null
+  kubectl config use-context k8s &>/dev/null
 }
 
 function mount_filesystem_shared_if_necessary {
@@ -99,9 +99,9 @@ function mount_filesystem_shared_if_necessary {
   if [ -n "${machine}" ]; then
     docker-machine ssh ${machine} sudo mount --make-shared /
   else
-    if grep -q "MountFlags=slave" /etc/systemd/system/docker.service /usr/lib64/systemd/system/docker.service &> /dev/null; then
+    if grep -q "MountFlags=slave" /etc/systemd/system/docker.service /usr/lib64/systemd/system/docker.service &>/dev/null; then
       sudo mkdir -p /etc/systemd/system/docker.service.d/
-sudo tee /etc/systemd/system/docker.service.d/clear_mount_propagtion_flags.conf > /dev/null << EOF
+sudo tee /etc/systemd/system/docker.service.d/clear_mount_propagtion_flags.conf >/dev/null << EOF
 [Service]
 MountFlags=shared
 EOF
@@ -112,13 +112,13 @@ EOF
 }
 
 function wait_for_kubernetes {
-  until $(kubectl cluster-info &> /dev/null); do
+  until $(kubectl cluster-info &>/dev/null); do
     sleep 1
   done
 }
 
 function create_kube_system_namespace {
-  kubectl create -f - << EOF > /dev/null
+  kubectl create -f - << EOF >/dev/null
 kind: Namespace
 apiVersion: v1
 metadata:
@@ -130,7 +130,7 @@ EOF
 
 function activate_kubernetes_dashboard {
   local dashboard_service_nodeport=${1}
-  kubectl create -f - << EOF > /dev/null
+  kubectl create -f - << EOF >/dev/null
 # Source: https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/kubernetes-dashboard-canary.yaml
 kind: List
 apiVersion: v1
@@ -196,7 +196,7 @@ function start_dns {
   local dns_server_ip=${2}
   local kubernetes_api_port=${3}
 
-  kubectl create -f - << EOF > /dev/null
+  kubectl create -f - << EOF >/dev/null
 apiVersion: v1
 kind: ReplicationController
 metadata:
@@ -344,7 +344,7 @@ function start_kubernetes {
   local dns_server_ip=${5}
   check_prerequisites
 
-  if kubectl cluster-info &> /dev/null; then
+  if kubectl cluster-info &>/dev/null; then
     echo kubectl is already configured to use an existing cluster.
     exit 1
   fi
@@ -374,7 +374,7 @@ function start_kubernetes {
         --read-only-port=0 \
         --cadvisor-port=0 \
         --allow-privileged=true --v=2 \
-        > /dev/null
+        >/dev/null
 
   echo Waiting for Kubernetes cluster to become available...
   wait_for_kubernetes
@@ -385,34 +385,34 @@ function start_kubernetes {
 }
 
 function delete_kubernetes_resources {
-  kubectl delete replicationcontrollers,services,pods,secrets --all > /dev/null 2>&1 || :
-  kubectl delete replicationcontrollers,services,pods,secrets --all --namespace=kube-system > /dev/null 2>&1 || :
-  kubectl delete namespace kube-system > /dev/null 2>&1 || :
+  kubectl delete replicationcontrollers,services,pods,secrets --all &>/dev/null || :
+  kubectl delete replicationcontrollers,services,pods,secrets --all --namespace=kube-system &>/dev/null || :
+  kubectl delete namespace kube-system &>/dev/null || :
 }
 
 function delete_docker_containers {
-  docker stop kubelet > /dev/null 2>&1
-  docker rm -fv kubelet > /dev/null 2>&1
+  docker stop kubelet &>/dev/null
+  docker rm -fv kubelet &>/dev/null
 
   k8s_containers=$(docker ps -aqf "name=k8s_")
   if [ ! -z "${k8s_containers}" ]; then
-    docker stop ${k8s_containers} > /dev/null 2>&1
-    docker wait ${k8s_containers} > /dev/null 2>&1
-    docker rm -fv ${k8s_containers} > /dev/null 2>&1
+    docker stop ${k8s_containers} &>/dev/null
+    docker wait ${k8s_containers} &>/dev/null
+    docker rm -fv ${k8s_containers} &>/dev/null
   fi
 
   local machine=$(active_docker_machine)
   if [ -n "${machine}" ]; then
-    docker-machine ssh ${machine} sudo rm -rf /var/lib/kubelet
+    docker-machine ssh ${machine} sudo rm -rf /var/lib/kubelet &>/dev/null
   else
-    sudo rm -rf /var/lib/kubelet > /dev/null 2>&1
+    sudo rm -rf /var/lib/kubelet &>/dev/null
   fi
 }
 
 function stop_kubernetes {
   check_prerequisites
 
-  if ! kubectl cluster-info &> /dev/null; then
+  if ! kubectl cluster-info &>/dev/null; then
     echo kubectl could not find any existing cluster. Continuing anyway...
   else
     delete_kubernetes_resources
