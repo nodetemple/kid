@@ -421,7 +421,13 @@ function delete_docker_containers {
 function stop_kubernetes {
   local kubernetes_api_port=${1}
   check_prerequisites
-  delete_kubernetes_resources
+
+  if ! kubectl cluster-info 2> /dev/null; then
+    echo kubectl could not find any existing cluster. Continuing anyway...
+  else
+    delete_kubernetes_resources
+  fi
+
   delete_docker_containers
   remove_port_forward_if_forwarded ${kubernetes_api_port}
 }
@@ -435,7 +441,6 @@ elif [ "${1}" == "down" ]; then
   # TODO: Ensure current Kubernetes context is set to local Docker (or Docker Machine VM) before downing
   stop_kubernetes ${KUBERNETES_API_PORT}
 elif [ "${1}" == "restart" ]; then
-  # TODO: Check if not currently running before downing. Show a message if not running.
   ${EXECUTABLE} down && ${EXECUTABLE} up
 elif [ "${1}" == "version" ]; then
   echo ${EXECUTABLE_VERSION}
