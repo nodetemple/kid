@@ -410,7 +410,6 @@ function delete_docker_containers {
 }
 
 function stop_kubernetes {
-  local kubernetes_api_port=${1}
   check_prerequisites
 
   if ! kubectl cluster-info &> /dev/null; then
@@ -428,7 +427,7 @@ if [ "${1}" == "up" ]; then
     ${KUBERNETES_DASHBOARD_NODEPORT} \
     ${DNS_DOMAIN} ${DNS_SERVER_IP}
 elif [ "${1}" == "down" ]; then
-  stop_kubernetes ${KUBERNETES_API_PORT}
+  stop_kubernetes
 elif [ "${1}" == "restart" ]; then
   ${EXECUTABLE} down && ${EXECUTABLE} up
 elif [ "${1}" == "version" ]; then
