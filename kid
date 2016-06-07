@@ -344,7 +344,7 @@ function start_kubernetes {
   local dns_server_ip=${5}
   check_prerequisites
 
-  if kubectl cluster-info 2> /dev/null; then
+  if kubectl cluster-info &> /dev/null; then
     echo kubectl is already configured to use an existing cluster.
     exit 1
   fi
@@ -413,7 +413,7 @@ function stop_kubernetes {
   local kubernetes_api_port=${1}
   check_prerequisites
 
-  if ! kubectl cluster-info 2> /dev/null; then
+  if ! kubectl cluster-info &> /dev/null; then
     echo kubectl could not find any existing cluster. Continuing anyway...
   else
     delete_kubernetes_resources
