@@ -400,13 +400,6 @@ function delete_docker_containers {
     docker wait ${k8s_containers} &>/dev/null
     docker rm -fv ${k8s_containers} &>/dev/null
   fi
-
-  local machine=$(active_docker_machine)
-  if [ -n "${machine}" ]; then
-    docker-machine ssh ${machine} sudo rm -rf /var/lib/kubelet &>/dev/null
-  else
-    sudo rm -rf /var/lib/kubelet &>/dev/null
-  fi
 }
 
 function stop_kubernetes {
