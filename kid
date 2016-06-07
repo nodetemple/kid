@@ -195,6 +195,7 @@ EOF
 function start_dns {
   local dns_domain=${1}
   local dns_server_ip=${2}
+  local kubernetes_api_port=${3}
 
   kubectl create -f - << EOF > /dev/null
 apiVersion: v1
@@ -281,14 +282,14 @@ spec:
         livenessProbe:
           httpGet:
             path: /healthz
-            port: 8080
+            port: ${kubernetes_api_port}
             scheme: HTTP
           initialDelaySeconds: 30
           timeoutSeconds: 5
         readinessProbe:
           httpGet:
             path: /healthz
-            port: 8080
+            port: ${kubernetes_api_port}
             scheme: HTTP
           initialDelaySeconds: 1
           timeoutSeconds: 5
@@ -304,9 +305,9 @@ spec:
             memory: 20Mi
         args:
         - -cmd=nslookup kubernetes.default.svc.${dns_domain} 127.0.0.1 >/dev/null
-        - -port=8080
+        - -port=${kubernetes_api_port}
         ports:
-        - containerPort: 8080
+        - containerPort: ${kubernetes_api_port}
           protocol: TCP
       volumes:
       - name: etcd-storage
@@ -377,7 +378,7 @@ function start_kubernetes {
   echo Waiting for Kubernetes cluster to become available...
   wait_for_kubernetes
   create_kube_system_namespace
-  start_dns ${dns_domain} ${dns_server_ip}
+  start_dns ${dns_domain} ${dns_server_ip} ${kubernetes_api_port}
   activate_kubernetes_dashboard ${dashboard_service_nodeport}
   echo Kubernetes cluster is up. The Kubernetes dashboard can be accessed via HTTP at port ${dashboard_service_nodeport} of your Docker host.
 }
