@@ -43,6 +43,13 @@ function check_prerequisites {
     ARCH=amd64
   fi
 
+  function get_kubectl {
+    curl -Ls http://storage.googleapis.com/kubernetes-release/release/v${KUBERNETES_VERSION}/bin/linux/amd64/kubectl -O
+    chmod +x kubectl
+    sudo mkdir -p ${INSTALL_PATH}
+    sudo mv -f kubectl ${INSTALL_PATH}/kubectl
+  }
+
   if ! echo "${SUPPORTED}" | tr ' ' '\n' | grep -q "${PLATFORM}-${ARCH}"; then
     echo ${EXECUTABLE} is not currently supported on ${PLATFORM}-${ARCH}!
     exit 1
@@ -59,13 +66,15 @@ function check_prerequisites {
     exit 1
   fi
 
-  # TODO: update/check kubectl if version changed on environment variable
   if ! [ "$(command -v kubectl)" ]; then
     echo kubectl is not installed yet. Installing now...
-    curl -Ls http://storage.googleapis.com/kubernetes-release/release/v${KUBERNETES_VERSION}/bin/linux/amd64/kubectl -O
-    chmod +x kubectl
-    sudo mkdir -p ${INSTALL_PATH}
-    sudo mv -f kubectl ${INSTALL_PATH}/kubectl
+    get_kubectl
+  else
+    local kubectl_version=$(kubectl version --client | grep -Po '(?<=GitVersion:"v).*(?=",)' | grep -Po "(\d+\.)+\d+")
+    if [ "${KUBERNETES_VERSION}" != "${kubectl_version}" ]; then
+      echo kubectl v${kubectl_version} found, but we need v${KUBERNETES_VERSION}. Updating now...
+      get_kubectl
+    fi
   fi
 }
 
