@@ -366,7 +366,7 @@ function start_kubernetes {
     /hyperkube kubelet \
         --containerized \
         --hostname-override="127.0.0.1" \
-        --address="0.0.0.0" \
+        --address="127.0.0.1" \
         --api-servers=http://localhost:${kubernetes_api_port} \
         --config=/etc/kubernetes/manifests \
         --cluster-dns=${DNS_SERVER_IP} \
