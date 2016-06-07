@@ -371,6 +371,8 @@ function start_kubernetes {
         --config=/etc/kubernetes/manifests \
         --cluster-dns=${DNS_SERVER_IP} \
         --cluster-domain=${DNS_DOMAIN} \
+        --read-only-port=0 \
+        --cadvisor-port=0 \
         --allow-privileged=true --v=2 \
         > /dev/null
 
