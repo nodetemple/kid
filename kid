@@ -385,9 +385,9 @@ function start_kubernetes {
 }
 
 function delete_kubernetes_resources {
-  kubectl delete replicationcontrollers,services,pods,secrets --all &>/dev/null || :
-  kubectl delete replicationcontrollers,services,pods,secrets --all --namespace=kube-system &>/dev/null || :
-  kubectl delete namespace kube-system &>/dev/null || :
+  kubectl delete replicationcontrollers,services,pods,secrets --all --grace-period=1 &>/dev/null || :
+  kubectl delete replicationcontrollers,services,pods,secrets --all --namespace=kube-system --grace-period=1 &>/dev/null || :
+  kubectl delete namespace kube-system --grace-period=1 &>/dev/null || :
 }
 
 function delete_docker_containers {
